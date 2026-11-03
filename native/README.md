@@ -1,5 +1,5 @@
 # Native QNX probe
-Source authored against QNX 8.0 primary documentation. **Native compile/runtime validation is pending.** Host Python tests do not qualify this runner.
+Source authored against QNX 8.0 primary documentation. **Locally compiled and exercised on QNX 8.0.0 x86_64 under QEMU on November 3, 2026.** See [the validation record](../docs/native-validation.md) for exact tooling, observations and limits. Host Python tests alone do not qualify this runner.
 
 Use a licensed QNX SDP 8.0 shell. For an x86_64 QEMU image:
 ```sh
@@ -23,7 +23,7 @@ TimerTimeout covers SEND and REPLY using CLOCK_MONOTONIC and SIGEV_UNBLOCK. Chan
 
 SIGINT/SIGTERM set an interruption flag; bounded operations return and atexit cleans the owned child. Cancellation is checked through final cleanup and output. A late interruption can occur after the last complete record has been written, so NDJSON alone cannot certify that the producer exited successfully.
 
-The canonical smoke harness writes to capture.partial.ndjson and publishes capture.ndjson only after producer exit 0, with native-exit-code.txt retained. Failed/interrupted producer output stays partial diagnostic material even if its bytes are structurally complete. Discard it as qualification evidence; keep it for investigation. Transfer the entire smoke directory as well as the host report, and check the exit receipt. This handoff is tested with synthetic producers; actual QNX cleanup/interruption still requires native execution.
+The canonical smoke harness writes to capture.partial.ndjson and publishes capture.ndjson only after producer exit 0, with native-exit-code.txt retained. Failed/interrupted producer output stays partial diagnostic material even if its bytes are structurally complete. Discard it as qualification evidence; keep it for investigation. Transfer the entire smoke directory as well as the host report, and check the exit receipt. Synthetic handoff regressions and local native interruption/cleanup checks are recorded separately; these checks do not cover every possible scheduling interleaving.
 
 Run only in the disposable sample context. No arbitrary PID, service, command, credentials or remote-fault flag exists. No production attachment is supported.
 

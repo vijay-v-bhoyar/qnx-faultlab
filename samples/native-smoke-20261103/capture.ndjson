@@ -1,0 +1,15 @@
+{"type":"session","schema_version":1,"tool_version":"0.1.0","session_id":"qnx-401424-34096507948","source_kind":"qnx-native","sysname":"QNX","release":"8.0.0","machine":"x86pc","timeout_ms":250,"clock":"CLOCK_MONOTONIC"}
+{"type":"event","seq":1,"scenario":"healthy","phase":"begin","monotonic_ns":34096616017,"outcome":"started","errno_name":"","detail":"Isolated FaultLab-owned sample only"}
+{"type":"event","seq":2,"scenario":"healthy","phase":"request","monotonic_ns":34097315039,"outcome":"reply","errno_name":"","detail":"Owned sample pid=405523; MsgSend rc=0 errno=0","started_ns":34097300954,"duration_ns":14085,"payload_ok":true}
+{"type":"event","seq":3,"scenario":"healthy","phase":"cleanup","monotonic_ns":34108217861,"outcome":"clean","errno_name":"","detail":"All owned sample children reaped"}
+{"type":"event","seq":4,"scenario":"healthy","phase":"end","monotonic_ns":34108293947,"outcome":"complete","errno_name":"","detail":"Drill observations complete; analyzer applies pinned contract"}
+{"type":"event","seq":5,"scenario":"stall","phase":"begin","monotonic_ns":34108304390,"outcome":"started","errno_name":"","detail":"Isolated FaultLab-owned sample only"}
+{"type":"event","seq":6,"scenario":"stall","phase":"request","monotonic_ns":34368405284,"outcome":"timeout","errno_name":"ETIMEDOUT","detail":"Owned sample pid=409619; MsgSend rc=-1 errno=260","started_ns":34108917014,"duration_ns":259488270,"payload_ok":false}
+{"type":"event","seq":7,"scenario":"stall","phase":"recovery_request","monotonic_ns":34380593217,"outcome":"reply","errno_name":"","detail":"Fresh owned sample pid=413715; MsgSend rc=0 errno=0","started_ns":34380562208,"duration_ns":31009,"payload_ok":true}
+{"type":"event","seq":8,"scenario":"stall","phase":"cleanup","monotonic_ns":34391899496,"outcome":"clean","errno_name":"","detail":"All owned sample children reaped"}
+{"type":"event","seq":9,"scenario":"stall","phase":"end","monotonic_ns":34391944570,"outcome":"complete","errno_name":"","detail":"Drill observations complete; analyzer applies pinned contract"}
+{"type":"event","seq":10,"scenario":"exit","phase":"begin","monotonic_ns":34391952603,"outcome":"started","errno_name":"","detail":"Isolated FaultLab-owned sample only"}
+{"type":"event","seq":11,"scenario":"exit","phase":"request","monotonic_ns":34392602943,"outcome":"server_gone","errno_name":"ESRCH","detail":"Owned sample pid=417811; MsgSend rc=-1 errno=3","started_ns":34392567691,"duration_ns":35252,"payload_ok":false}
+{"type":"event","seq":12,"scenario":"exit","phase":"recovery_request","monotonic_ns":34404602284,"outcome":"reply","errno_name":"","detail":"Fresh owned sample pid=421907; MsgSend rc=0 errno=0","started_ns":34404564904,"duration_ns":37380,"payload_ok":true}
+{"type":"event","seq":13,"scenario":"exit","phase":"cleanup","monotonic_ns":34415932645,"outcome":"clean","errno_name":"","detail":"All owned sample children reaped"}
+{"type":"event","seq":14,"scenario":"exit","phase":"end","monotonic_ns":34415975041,"outcome":"complete","errno_name":"","detail":"Drill observations complete; analyzer applies pinned contract"}
