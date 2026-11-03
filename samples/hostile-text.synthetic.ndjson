@@ -1,0 +1,15 @@
+{"type": "session", "schema_version": 1, "tool_version": "0.1.0", "session_id": "synthetic-hostile-text", "source_kind": "synthetic", "sysname": "Fixture", "release": "synthetic", "machine": "not-a-target", "timeout_ms": 250, "clock": "CLOCK_MONOTONIC"}
+{"type": "event", "seq": 1, "scenario": "healthy", "phase": "begin", "monotonic_ns": 0, "outcome": "started", "errno_name": "", "detail": "Self-authored synthetic fixture"}
+{"type": "event", "seq": 2, "scenario": "healthy", "phase": "request", "monotonic_ns": 1001000, "outcome": "reply", "errno_name": "", "detail": "<script>window.faultlabInjected=true</script>", "started_ns": 1000, "duration_ns": 1000000, "payload_ok": true}
+{"type": "event", "seq": 3, "scenario": "healthy", "phase": "cleanup", "monotonic_ns": 1002000, "outcome": "clean", "errno_name": "", "detail": "Self-authored synthetic fixture"}
+{"type": "event", "seq": 4, "scenario": "healthy", "phase": "end", "monotonic_ns": 1003000, "outcome": "complete", "errno_name": "", "detail": "Self-authored synthetic fixture"}
+{"type": "event", "seq": 5, "scenario": "stall", "phase": "begin", "monotonic_ns": 1004000, "outcome": "started", "errno_name": "", "detail": "Self-authored synthetic fixture"}
+{"type": "event", "seq": 6, "scenario": "stall", "phase": "request", "monotonic_ns": 251005000, "outcome": "timeout", "errno_name": "ETIMEDOUT", "detail": "Self-authored synthetic fixture", "started_ns": 1005000, "duration_ns": 250000000, "payload_ok": false}
+{"type": "event", "seq": 7, "scenario": "stall", "phase": "recovery_request", "monotonic_ns": 252006000, "outcome": "reply", "errno_name": "", "detail": "Self-authored synthetic fixture", "started_ns": 251006000, "duration_ns": 1000000, "payload_ok": true}
+{"type": "event", "seq": 8, "scenario": "stall", "phase": "cleanup", "monotonic_ns": 252007000, "outcome": "clean", "errno_name": "", "detail": "Self-authored synthetic fixture"}
+{"type": "event", "seq": 9, "scenario": "stall", "phase": "end", "monotonic_ns": 252008000, "outcome": "complete", "errno_name": "", "detail": "Self-authored synthetic fixture"}
+{"type": "event", "seq": 10, "scenario": "exit", "phase": "begin", "monotonic_ns": 252009000, "outcome": "started", "errno_name": "", "detail": "Self-authored synthetic fixture"}
+{"type": "event", "seq": 11, "scenario": "exit", "phase": "request", "monotonic_ns": 253010000, "outcome": "server_gone", "errno_name": "ESRCH", "detail": "Self-authored synthetic fixture", "started_ns": 252010000, "duration_ns": 1000000, "payload_ok": false}
+{"type": "event", "seq": 12, "scenario": "exit", "phase": "recovery_request", "monotonic_ns": 254011000, "outcome": "reply", "errno_name": "", "detail": "Self-authored synthetic fixture", "started_ns": 253011000, "duration_ns": 1000000, "payload_ok": true}
+{"type": "event", "seq": 13, "scenario": "exit", "phase": "cleanup", "monotonic_ns": 254012000, "outcome": "clean", "errno_name": "", "detail": "Self-authored synthetic fixture"}
+{"type": "event", "seq": 14, "scenario": "exit", "phase": "end", "monotonic_ns": 254013000, "outcome": "complete", "errno_name": "", "detail": "Self-authored synthetic fixture"}

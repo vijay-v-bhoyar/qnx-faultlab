@@ -1,0 +1,19 @@
+# Private workflow, review and historical evidence remain local.
+/docs/hackathon/
+/.devpost-hackathon-state.json
+/.playwright-mcp/
+/artifacts/
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+/native/faultlab_probe
+/native/faultlab_probe.exe
+# Do not distribute local SDK/account/runtime material.
+*.key
+*.license
+*.qclicense
+qnx800/
+qnxsoftwarecenter/
