@@ -6,6 +6,7 @@ import sys
 from . import __version__
 from .analysis import analyze
 from .capture import CaptureError, load_capture
+from .comparison import compare_captures, write_comparison
 from .report import ReportError, write_report
 
 
@@ -20,8 +21,20 @@ def main(argv=None):
         command.add_argument("capture", help="UTF-8 FaultLab NDJSON capture")
         if name == "report":
             command.add_argument("--out", required=True, help="New report directory; existing paths are refused")
+    comparison = commands.add_parser("compare", help="Compare two inventory application captures offline")
+    comparison.add_argument("baseline", help="Baseline schema 2 inventory capture")
+    comparison.add_argument("candidate", help="Candidate schema 2 inventory capture")
+    comparison.add_argument("--out", required=True, help="New comparison directory; existing paths are refused")
+    comparison.add_argument("--max-recovery-ms", type=int, help="Optional caller recovery-workflow budget, integer 1..60000 ms; no default")
     args = parser.parse_args(argv)
     try:
+        if args.command == "compare":
+            baseline, candidate = load_capture(args.baseline), load_capture(args.candidate)
+            result = compare_captures(baseline, candidate, max_recovery_ms=args.max_recovery_ms)
+            out = write_comparison(baseline, candidate, args.out, max_recovery_ms=args.max_recovery_ms)
+            print(f"{result['overall']} - application {result['application_transition']}; timing {result['timing_status']}; comparison: {out / 'index.html'}")
+            print(result["provenance_note"])
+            return 0 if result["overall"] == "PASS" else 1
         capture = load_capture(args.capture)
         result = analyze(capture)
         if args.command == "report":

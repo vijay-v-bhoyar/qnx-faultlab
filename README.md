@@ -20,6 +20,12 @@ The first command intentionally exits **1** and retains its FAIL report; the sec
 
 These commands replay retained QNX bytes; they do not run QNX on the host. Keep the entire [native application sample](samples/native-inventory-20261104), including actual producer exits and journals. See [application validation](docs/inventory-validation.md) for the exact build, target, evidence and limits. This remains a controlled sample, not an adapter for arbitrary services.
 
+## Compare a change and declare an optional budget
+```sh
+python -m faultlab compare samples/native-inventory-20261104/naive/capture.ndjson samples/native-inventory-20261104/idempotent/capture.ndjson --out artifacts/recovery-comparison
+```
+This returns0 for the corrected candidate and shows both application state paths. Timing is **NOT_EVALUATED** unless you deliberately supply `--max-recovery-ms` (integer1..60000). A supplied-budget failure exits1 and retains the comparison even when the candidate's application state is correct. Both original captures and full reports remain in the eight-file handoff. See [comparison instructions and measurement limits](docs/comparison.md); there is no default real-time threshold or hardware timing claim.
+
 ## Try the host report
 From this source directory, use Python 3.10 or newer (locally exercised with Python 3.12 on Windows):
 ```sh

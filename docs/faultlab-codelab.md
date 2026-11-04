@@ -68,7 +68,19 @@ The service uses ChannelCreate/ConnectAttach/MsgSend/MsgReceive/MsgReply and Tim
 
 Interpretation: host1=analyzed mismatch with retained report; host2=invalid/incomplete input or IO, not an application verdict. No SDK? Replay retained data and label it replay. A green result does not establish arbitrary-service correctness, power-loss durability, hardware timing, safety or human benefit. This original in-period guide was authored with Codex assistance.
 
-## Optional legacy IPC walkthrough
+## F. Compare changes without implying a timing guarantee
+
+Run from this source root with a new output path:
+```sh
+python -m faultlab compare samples/native-inventory-20261104/naive/capture.ndjson samples/native-inventory-20261104/idempotent/capture.ndjson --out artifacts/codelab-before-after
+```
+Expected exit0: candidate applicationPASS and transition improved. Open index.html. Confirm both state paths and their original evidence links. Timing must say **NOT_EVALUATED** because no budget was supplied.
+
+You may deliberately add `--max-recovery-ms 1000` with another new output path to exercise an illustrative caller budget. That number is not a production recommendation. The interval runs from lost-reply completion to final-state reply within each capture; it is not the configured request timeout or a cross-run clock subtraction. A budget violation exits1 with evidence retained even when the application passes. Try reversing the input pair with a fresh output: the naive candidate should regress and exit1. See [the exact policy, format and limits](comparison.md).
+
+Checkpoint: why can the same candidate receive applicationPASS while its supplied timing policy fails? What does NOT_EVALUATED prevent you from concluding? No human productivity, statistical timing or safety result follows from these commands.
+
+## Optional legacy IPC walkthrough (schema1)
 
 The following original task teaches the narrower healthy/stall/exit contracts. Its synthetic failed-echo comparison is separate from the actual native application baseline above.
 
