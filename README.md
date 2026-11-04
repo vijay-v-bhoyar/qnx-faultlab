@@ -1,14 +1,24 @@
 # QNX FaultLab
-**Repeatable service-failure drills. Inspectable client outcomes.**
+**A service restarted. Did it apply your request twice?**
 
-FaultLab pairs a small native QNX 8.0 example runner with a dependency-free Python host tool. It checks three pinned contracts—healthy exchange, stalled reply, and service exit—and creates an offline report with the original observations.
+FaultLab pairs owned native QNX 8.0 services with a dependency-free Python analyzer and offline report. Its application demo commits an inventory reservation, crashes before replying, and retries the same operation after restart. The naive implementation double-reserves stock; the idempotent implementation recognizes the persisted operation. FaultLab checks actual stock and committed-operation counts, not just whether a fresh process answers. The original healthy/stall/exit IPC drills remain supported.
 
-**Current validation:** the runner compiled with licensed QNX SDP 8.0 and passed three local QNX 8.0.0 x86_64/QEMU smoke runs, recovery, interruption and closed-pipe cleanup checks on November 3, 2026. The host analyzer/report also has automated and browser evidence. See the [native validation record](docs/native-validation.md), including the SDK verification finding and limits. This is a prototype, not a qualified fault-injection or safety tool.
+**Current validation:** the inventory application compiled with licensed SDP8.0 and completed three actual QNX8.0.0 x86_64/QEMU bad/good pairs on November4,2026. The host flags duplicate application in each naive run and verifies the corrected state; the final target ELF matches the compiled binary. See [application validation](docs/inventory-validation.md). The earlier IPC runner's three smoke/interruption/closed-pipe checks remain in [legacy validation](docs/native-validation.md), including the SDK finding. This is a prototype, not a qualified fault-injection or safety tool.
 
-![Synthetic report example](assets/report-synthetic-desktop.png)
+![Actual native duplicate-reservation failure report](assets/report-inventory-native.png)
 
 ## Guided tutorial
-Learn to [inspect QNX client failures and recovery evidence](docs/faultlab-codelab.md) using the retained native sample, a deliberately failed synthetic recovery, and an optional fresh-target run.
+Learn to [detect duplicate application after a lost QNX reply](docs/faultlab-codelab.md) using retained native naive/corrected captures, their journals, and an optional fresh-target run.
+
+## Inspect the application failure and correction
+Use Python 3.10+ from this source directory:
+```sh
+python -m faultlab report samples/native-inventory-20261104/naive/capture.ndjson --out artifacts/inventory-naive
+python -m faultlab report samples/native-inventory-20261104/idempotent/capture.ndjson --out artifacts/inventory-idempotent
+```
+The first command intentionally exits **1** and retains its FAIL report; the second exits **0**. Run both commands separately if your shell stops on a nonzero exit. Open both index.html files. A restarted service initially reports stock7 in both runs. Retrying operation101 changes naive stock to4 (wrong), while the corrected service leaves7. A distinct operation102 then leaves2 versus the required5. The report exposes operation IDs, quantities, remaining stock, applied counts and duplicate recognition.
+
+These commands replay retained QNX bytes; they do not run QNX on the host. Keep the entire [native application sample](samples/native-inventory-20261104), including actual producer exits and journals. See [application validation](docs/inventory-validation.md) for the exact build, target, evidence and limits. This remains a controlled sample, not an adapter for arbitrary services.
 
 ## Try the host report
 From this source directory, use Python 3.10 or newer (locally exercised with Python 3.12 on Windows):

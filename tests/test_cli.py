@@ -25,7 +25,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("report", result.stdout)
         self.assertIn("validate", result.stdout)
-        self.assertEqual(self.run_cli("--version").stdout.strip(), "0.1.0")
+        self.assertEqual(self.run_cli("--version").stdout.strip(), "0.2.0")
 
     def test_complete_report_first_task(self):
         path = self.root / "source.ndjson"

@@ -12,6 +12,10 @@ BASE_FIELDS = {"type", "seq", "scenario", "phase", "monotonic_ns", "outcome", "e
 REQUEST_FIELDS = {"started_ns", "duration_ns", "payload_ok"}
 SESSION_FIELDS = {"type", "schema_version", "tool_version", "session_id", "source_kind",
                   "sysname", "release", "machine", "timeout_ms", "clock"}
+INVENTORY_FIELDS = {"operation_id", "quantity", "remaining", "applied", "duplicate"}
+INVENTORY_PHASES = ("begin", "request", "crash_exit", "recovered_state", "recovery_request",
+                    "followup_request", "final_state", "cleanup", "end")
+INVENTORY_REQUESTS = {"request", "recovered_state", "recovery_request", "followup_request", "final_state"}
 
 
 class CaptureError(ValueError):
@@ -66,7 +70,8 @@ def parse_capture(raw):
     if len(raw) > MAX_BYTES:
         raise CaptureError(f"capture exceeds {MAX_BYTES} bytes")
     try:
-        lines = raw.decode("utf-8").splitlines()
+        # NDJSON records are LF-delimited; Unicode separators inside JSON are text.
+        lines = raw.decode("utf-8").split("\n")
     except UnicodeDecodeError as exc:
         raise CaptureError("capture is not valid UTF-8") from exc
     nonempty = [(n, line) for n, line in enumerate(lines, 1) if line.strip()]
@@ -82,10 +87,12 @@ def parse_capture(raw):
             raise CaptureError(f"line {line_number}: expected JSON object")
         records.append(row)
     session = records[0]
-    _fields(session, SESSION_FIELDS, "session")
-    for key in SESSION_FIELDS - {"schema_version", "timeout_ms"}:
+    _integer(session.get("schema_version"), "session.schema_version", 1, 2)
+    inventory = session["schema_version"] == 2
+    session_fields = SESSION_FIELDS | ({"contract", "implementation"} if inventory else set())
+    _fields(session, session_fields, "session")
+    for key in session_fields - {"schema_version", "timeout_ms"}:
         _text(session[key], "session." + key)
-    _integer(session["schema_version"], "session.schema_version", 1, 1)
     _integer(session["timeout_ms"], "session.timeout_ms", 10, 5000)
     if session["type"] != "session" or session["clock"] != "CLOCK_MONOTONIC":
         raise CaptureError("session: expected session type and CLOCK_MONOTONIC")
@@ -93,19 +100,28 @@ def parse_capture(raw):
         raise CaptureError("session.source_kind: expected synthetic or qnx-native")
     if session["source_kind"] == "qnx-native" and (session["sysname"] != "QNX" or not session["release"].startswith("8.")):
         raise CaptureError("native declaration requires sysname QNX and QNX 8.x release")
+    if inventory and (session["contract"] != "inventory-retry/1" or session["implementation"] not in {"naive", "idempotent"}):
+        raise CaptureError("session: expected inventory-retry/1 and naive or idempotent implementation")
     expected = []
     for scenario in SCENARIOS:
         phases = ["begin", "request"]
         if scenario != "healthy":
             phases.append("recovery_request")
         expected.extend((scenario, phase) for phase in phases + ["cleanup", "end"])
+    if inventory:
+        expected = [("inventory_retry", phase) for phase in INVENTORY_PHASES]
     if len(records) - 1 != len(expected):
-        raise CaptureError(f"incomplete or extra capture: expected {len(expected)} events for healthy, stall and exit")
+        raise CaptureError(f"incomplete or extra capture: expected {len(expected)} events for {'inventory retry' if inventory else 'healthy, stall and exit'}")
     previous_time = 0
     for seq, ((scenario, phase), event) in enumerate(zip(expected, records[1:]), 1):
         label = f"event {seq}"
-        request = phase in {"request", "recovery_request"}
-        _fields(event, BASE_FIELDS | (REQUEST_FIELDS if request else set()), label)
+        request = phase in (INVENTORY_REQUESTS if inventory else {"request", "recovery_request"})
+        fields = BASE_FIELDS | (REQUEST_FIELDS if request else set())
+        if inventory and request:
+            fields |= INVENTORY_FIELDS
+        if inventory and phase == "crash_exit":
+            fields |= {"exit_code"}
+        _fields(event, fields, label)
         for key in BASE_FIELDS - {"seq", "monotonic_ns"}:
             _text(event[key], label + "." + key, allow_empty=key in {"errno_name", "detail"})
         _integer(event["seq"], label + ".seq", seq, seq)
@@ -121,10 +137,18 @@ def parse_capture(raw):
                 raise CaptureError(label + ": duration does not equal completion minus start")
             if event["outcome"] not in {"reply", "timeout", "server_gone", "error"}:
                 raise CaptureError(label + ": unknown request outcome")
+            if inventory:
+                for key, minimum, maximum in (("operation_id", 0, 102), ("quantity", 0, 3),
+                                               ("remaining", -1, 10), ("applied", -1, 3)):
+                    _integer(event[key], label + "." + key, minimum, maximum)
+                if type(event["duplicate"]) is not bool:
+                    raise CaptureError(label + ".duplicate: expected boolean")
         else:
-            allowed = {"begin": {"started"}, "cleanup": {"clean", "error"}, "end": {"complete"}}[phase]
+            allowed = {"begin": {"started"}, "crash_exit": {"exited"}, "cleanup": {"clean", "error"}, "end": {"complete"}}[phase]
             if event["outcome"] not in allowed or event["errno_name"]:
                 raise CaptureError(label + ": invalid phase outcome or errno")
+            if phase == "crash_exit":
+                _integer(event["exit_code"], label + ".exit_code", 0, 255)
         previous_time = event["monotonic_ns"]
     return Capture(raw, session, tuple(records[1:]), sha256(raw).hexdigest())
 

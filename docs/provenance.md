@@ -1,4 +1,5 @@
 # Provenance and validation
+The November4 application extension adds original C inventory/journal/retry logic, schema2 host analysis and native naive/corrected samples. Its actual final source/ELF identity and process-crash observations are in [application validation](inventory-validation.md). These samples are distinct from authored synthetic fixtures and the November3 IPC run. No SDK/image/license/binary is redistributed. Codex assisted the extension, regression tests, tutorial and local demonstration preparation.
 FaultLab source, test fixtures and report design were authored for this project with Codex assistance in November 2026. No upstream repository history, QNX SDK headers/libraries/binaries, system images or credentials are included.
 
 API semantics were checked against primary QNX 8.0 documentation:

@@ -50,19 +50,40 @@ def render_html(result):
     synthetic = result["source_kind"] == "synthetic"
     label = "SYNTHETIC EXAMPLE" if synthetic else "DECLARED QNX CAPTURE"
     title = "Fixture analysis, not native proof" if synthetic else "Observed contracts, declared provenance"
-    names = {"healthy": "Healthy exchange", "stall": "Stalled reply", "exit": "Service exit"}
+    inventory = result["contract_version"] == "inventory-retry/1"
+    lead = ("One application contract. Inspect a lost reservation reply, restarted state, same-operation retry and a new reservation."
+            if inventory else "One capture. Three service drills. See what the client observed, whether recovery worked, and the evidence behind each verdict.")
+    implementation = (f'<dt>Declared implementation</dt><dd>{escape(session["implementation"])} (the verdict checks observed state)</dd>'
+                      if inventory else "")
+    names = {"healthy": "Healthy exchange", "stall": "Stalled reply", "exit": "Service exit",
+             "inventory_retry": "Inventory reservation after a lost reply"}
     cards = []
     for scenario in result["scenarios"]:
-        rows = []
+        rows, application_rows = [], []
         start = scenario["events"][0]["monotonic_ns"]
         for event in scenario["events"]:
             duration = _ms(event["duration_ns"]) if "duration_ns" in event else "—"
+            detail = event["detail"]
+            if "exit_code" in event:
+                detail += f"; observed child exit {event['exit_code']}"
             values = (event["phase"], event["outcome"], event["errno_name"] or "—",
                       str(event["payload_ok"]).lower() if "payload_ok" in event else "—",
-                      _ms(event["monotonic_ns"] - start), duration, event["detail"])
+                      _ms(event["monotonic_ns"] - start), duration, detail)
             labels = ("Phase", "Outcome", "Error", "Payload verified", "Elapsed ms", "Duration ms", "Note")
             rows.append("<tr>" + "".join(f'<td data-label="{label}">{escape(str(value))}</td>'
                         for label, value in zip(labels, values)) + "</tr>")
+            if "operation_id" in event:
+                state_values = (event["phase"], event["operation_id"], event["quantity"],
+                                event["remaining"] if event["remaining"] >= 0 else "unknown",
+                                event["applied"] if event["applied"] >= 0 else "unknown",
+                                str(event["duplicate"]).lower() if event["payload_ok"] else "unknown")
+                state_labels = ("Phase", "Operation", "Quantity", "Remaining", "Applied", "Duplicate")
+                application_rows.append("<tr>" + "".join(f'<td data-label="{label}">{escape(str(value))}</td>'
+                                        for label, value in zip(state_labels, state_values)) + "</tr>")
+        application = ("<h3>Application state</h3><p class=\"small\">Initial stock 10. Retry operation 101 must preserve stock 7; new operation 102 must leave 5. Applied counts committed reservations; Duplicate marks an already committed operation.</p>"
+                       "<table><caption>Observed application replies; unknown means no reply was received.</caption><thead><tr>"
+                       + "".join(f'<th scope="col">{label}</th>' for label in state_labels)
+                       + "</tr></thead><tbody>" + "".join(application_rows) + "</tbody></table>") if application_rows else ""
         failures = "".join(f'<li>{escape(f)}</li>' for f in scenario["failures"])
         error = f'<ul class="error">{failures}</ul>' if failures else ""
         cards.append(f"""
@@ -70,7 +91,7 @@ def render_html(result):
 <div class="scenario-top"><div><div class="eyebrow">Drill {len(cards)+1:02d}</div><h2 id="{scenario['id']}-heading">{names[scenario['id']]}</h2></div><span class="badge">{scenario['status']}</span></div>
 <p class="expectation"><strong>Expected:</strong> {escape(scenario['expected'])}</p>
 <p class="observation"><strong>Observed:</strong> {escape(scenario['observed'])}{' · '+escape(scenario['errno_name']) if scenario['errno_name'] else ''}</p>
-{error}<div class="facts"><span>Initial request: <strong>{_ms(scenario['duration_ns'])} ms</strong></span><span>{len(scenario['events'])} recorded events</span></div>
+{error}<div class="facts"><span>Initial request: <strong>{_ms(scenario['duration_ns'])} ms</strong></span><span>{len(scenario['events'])} recorded events</span></div>{application}
 <details><summary>Inspect original observations — {names[scenario['id']]}</summary>
 <table><caption>Elapsed time is since this drill began (ms); request duration is recorded separately. Values rounded to 0.001 ms; exact ns are in the raw capture.</caption>
 <thead><tr><th scope="col">Phase</th><th scope="col">Outcome</th><th scope="col">Error</th><th scope="col">Payload verified</th><th scope="col">Elapsed ms</th><th scope="col">Duration ms</th><th scope="col">Note</th></tr></thead><tbody>{''.join(rows)}</tbody></table>
@@ -82,13 +103,13 @@ def render_html(result):
 <title>FaultLab — {escape(session['session_id'])}</title><style>{STYLE}</style></head>
 <body><main><header><div class="top"><span class="brand">FAULTLAB / RUN REPORT</span><span class="version">v{escape(result['tool_version'])} · {escape(result['contract_version'])}</span></div>
 <div class="eyebrow section-header">Repeatable drills. Inspectable outcomes.</div><h1>Failure, made<br>inspectable.</h1>
-<p class="lead">One capture. Three service drills. See what the client observed, whether recovery worked, and the evidence behind each verdict.</p>
+<p class="lead">{lead}</p>
 <div class="banner" role="note"><strong>{label}</strong><p>{escape(result['provenance_note'])}</p></div></header>
 <div class="summary"><section class="panel" aria-labelledby="overview"><div class="eyebrow">Contract observations</div><h2 id="overview">{title}</h2>
-<div class="metric">{result['counts']['passed']} / 3 matched</div><p class="small">{result['counts']['failed']} mismatched. PASS means the recorded outcome matched the pinned drill contract, including expected failure and recovery. It is not a safety certification.</p></section>
+<div class="metric">{result['counts']['passed']} / {result['counts']['total']} matched</div><p class="small">{result['counts']['failed']} mismatched. PASS means the recorded outcome matched the pinned contract, including expected failure and recovery. It is not a safety certification.</p></section>
 <section class="panel" aria-labelledby="identity"><h2 id="identity">Capture identity</h2><dl class="metadata">
 <dt>Session</dt><dd>{escape(session['session_id'])}</dd><dt>Declared target</dt><dd>{escape(session['sysname'])} {escape(session['release'])} / {escape(session['machine'])}</dd>
-<dt>Configured timeout</dt><dd>{session['timeout_ms']} ms</dd><dt>Clock</dt><dd>{escape(session['clock'])}</dd><dt>Source SHA-256</dt><dd class="digest"><code>{result['source_sha256']}</code></dd></dl></section></div>
+{implementation}<dt>Configured timeout</dt><dd>{session['timeout_ms']} ms</dd><dt>Clock</dt><dd>{escape(session['clock'])}</dd><dt>Source SHA-256</dt><dd class="digest"><code>{result['source_sha256']}</code></dd></dl></section></div>
 <h2 class="section-header">Drill results</h2><p class="small">An expected timeout or lost server can be a successful drill observation. Failed recovery or cleanup cannot.</p>
 <input class="filter" type="radio" name="view" id="all" checked><label class="filter-label" for="all">All drills</label>
 <input class="filter" type="radio" name="view" id="attention"><label class="filter-label" for="attention">Needs attention ({result['counts']['failed']})</label>

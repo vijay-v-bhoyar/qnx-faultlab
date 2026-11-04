@@ -89,6 +89,18 @@ class CaptureTests(unittest.TestCase):
         raw = b"\n" + encode().replace(b"\n", b"\r\n")
         self.assertEqual(parse_capture(raw).raw, raw)
 
+    def test_literal_unicode_separators_are_text_not_record_boundaries(self):
+        for separator in ("\u0085", "\u2028", "\u2029"):
+            with self.subTest(separator=repr(separator)):
+                data = records()
+                data[2]["detail"] = "prefix" + separator + "suffix"
+                raw = encode(data)
+                escaped = ("\n".join(json.dumps(row, ensure_ascii=True) for row in data) + "\n").encode()
+                literal = parse_capture(raw)
+                self.assertEqual(literal.events, parse_capture(escaped).events)
+                self.assertEqual(literal.raw, raw)
+                self.assertEqual(literal.sha256, hashlib.sha256(raw).hexdigest())
+
     def test_reject_unpaired_surrogates_before_report_encoding(self):
         for index, field in ((0, "session_id"), (2, "detail")):
             data = records()

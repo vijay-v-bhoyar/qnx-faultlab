@@ -5,10 +5,13 @@ CFLAGS ?= -std=c11 -Wall -Wextra -Werror -O2
 TARGET = faultlab_probe
 
 .PHONY: all clean
-all: $(TARGET)
+all: $(TARGET) faultlab_inventory
 
 $(TARGET): faultlab_probe.c
 	$(QCC) -V$(QNX_VARIANT) $(CFLAGS) -o $@ $<
 
+faultlab_inventory: inventory_demo.c
+	$(QCC) -V$(QNX_VARIANT) $(CFLAGS) -o $@ $<
+
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) faultlab_inventory

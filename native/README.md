@@ -1,4 +1,22 @@
 # Native QNX probe
+
+## Application: commit succeeded, reply was lost
+Build both runners with `make -C native` in the licensed SDP8.0 environment. Transfer `native/faultlab_inventory` and `native/inventory-smoke.sh` to a disposable QNX8.0 x86_64 directory. Then run:
+```sh
+sh inventory-smoke.sh ./faultlab_inventory ./inventory-run
+```
+This runs two real application variants. Both commit reservation101 (3 of10 units), synchronize and close the journal, then exit42 before MsgReply. The client observes ESRCH. A restarted service reloads the same journal, reports stock7, retries101, handles new reservation102 (2 units), and reports final stock. The naive baseline applies101 twice, leaving4 then2; the idempotent implementation leaves7 then5. The host checks those observed fields independently of the implementation label.
+
+Transfer the entire inventory-run directory back, then run these host commands separately:
+```sh
+python -m faultlab report inventory-run/naive/capture.ndjson --out artifacts/inventory-naive
+python -m faultlab report inventory-run/idempotent/capture.ndjson --out artifacts/inventory-idempotent
+```
+Expected host exits are1 and0. Native inventory producer exits0 for matched invariants,1 for a completed application mismatch,2 for infrastructure/input/output failure, or128+signal for accepted cancellation. Unlike the legacy smoke harness, inventory-smoke.sh deliberately retains a completed naive exit1 capture. Unexpected statuses remain partial and stop the harness with2. Check actual status receipts; a standalone capture never establishes producer completion.
+
+State directories must be new; the sample leaves its append-only journals for review. Faults affect only its own service child. This validates a controlled process-crash/retry case, not arbitrary applications, concurrent writers, torn journal recovery, VM/power loss, general transaction durability or distributed exactly-once execution. See [application validation](../docs/inventory-validation.md).
+
+## Legacy IPC runner
 Source authored against QNX 8.0 primary documentation. **Locally compiled and exercised on QNX 8.0.0 x86_64 under QEMU on November 3, 2026.** See [the validation record](../docs/native-validation.md) for exact tooling, observations and limits. Host Python tests alone do not qualify this runner.
 
 Use a licensed QNX SDP 8.0 shell. For an x86_64 QEMU image:

@@ -1,4 +1,76 @@
-# Inspect QNX client failures without losing the recovery evidence
+# Detect a duplicate reservation after a lost QNX reply
+
+A service restarted and answered again. Was the operation applied twice? This application walkthrough compares a deliberately naive retry implementation with a corrected idempotent implementation, using retained actual QNX observations and state journals.
+
+## Application prerequisites and scope
+
+Use Python3.10+ from this repository root. Replaying retained captures requires no SDK, package installation, server or account. Always choose new output paths. Fresh execution additionally requires licensed QNX SDP8.0 and a disposable QNX8.0 x86_64 target.
+
+Only FaultLab's own service is faulted. This is a controlled process-crash sample, not a production inventory system, arbitrary-service adapter, concurrent-writer journal, power-loss engine or distributed exactly-once guarantee. No measured learner/productivity benefit is claimed.
+
+## A. Predict the application invariant
+
+Start stock10. Operation101 reserves3 and commits to a synchronized/closed journal, then the service exits42 BEFORE MsgReply. The client observes ESRCH. On restart the same journal must reconstruct stock7 with one committed reservation. Retrying101/3 must leave7/1 and recognize the duplicate. New operation102/2 must leave5/2.
+
+| Observation | Naive | Idempotent |
+|---|---|---|
+| Initial client reply | Lost: ESRCH | Lost: ESRCH |
+| Restart query before retry |7 units /1 commit|7 units /1 commit|
+| Retry101/3 |4 units /2 commits, duplicate=false|7 units /1 commit, duplicate=true|
+| New102/2 and final query |2 units /3 commits|5 units /2 commits|
+
+Checkpoint: why is a successful reply from a restarted service insufficient?
+
+## B. Inspect the real native failing baseline
+
+Run these commands separately; the first nonzero exit is intentional:
+
+```sh
+python -m faultlab report samples/native-inventory-20261104/naive/capture.ndjson --out artifacts/codelab-inventory-naive
+python -m faultlab report samples/native-inventory-20261104/idempotent/capture.ndjson --out artifacts/codelab-inventory-corrected
+```
+
+Expected host exits: **1 then0**. Both reports are retained. These commands read native capture bytes; they do not execute QNX on your host.
+
+Open both index.html files. The naive report shows0/1 matched: retry stock4 and final stock2 violate the required7 and5. The corrected report shows1/1 matched. In **Application state**, compare recovered_state, recovery_request, followup_request and final_state, including operation IDs, applied counts and duplicate flags. The lost-reply request has unknown application state, rather than an invented successful result.
+
+Open **Inspect original observations**: find the initial server_gone/ESRCH and observed child exit42. Use **Needs attention** then **All drills**. Both initial client errors are expected; only the corrected implementation preserves the application invariant. The oracle checks observed state independently of the implementation label.
+
+## C. Corroborate with journal and actual status
+
+Inspect naive/state/journal.txt and idempotent/state/journal.txt beside the original captures. Journal rows are two space-separated integers, e.g. `101 3`. The naive journal repeats that row; the corrected journal has it once, followed by `102 2`. State queries are separate requests to the same application; the separately transferred journal corroborates their story in this controlled run.
+
+The neighboring native-exit-code.txt files contain1 and0. Inventory producer exit1 is a completed contract mismatch; exit2 is infrastructure/input/output failure. inventory-smoke.sh expects naive1/corrected0 and retains both completed captures; unexpected statuses remain partial. A failed actual-status receipt write prevents promotion. This differs from the older IPC smoke harness's all-success policy.
+
+Keep the whole [native application sample](../samples/native-inventory-20261104), including target, version, journals, diagnostics, manifest and receipts. [Application validation](inventory-validation.md) records native/source/binary identity and limits.
+
+## D. Verify original-byte handoff
+
+Use **Open analysis JSON** and **Open original capture**. Compare bytes:
+
+```sh
+python -c "from pathlib import Path; import hashlib; original=Path('samples/native-inventory-20261104/idempotent/capture.ndjson').read_bytes(); retained=Path('artifacts/codelab-inventory-corrected/source.ndjson').read_bytes(); print('Exact bytes:', original==retained); print('SHA-256:', hashlib.sha256(retained).hexdigest())"
+```
+
+Expected Exact bytes:True. Compare the digest to the sample manifest. Share the whole report plus original run/status context. Hashes detect changes, not origin; native_execution_verified remains false by design. LF/CRLF delimit records; literal Unicode separators inside JSON text are preserved.
+
+## E. Capture your own native failure and correction
+
+In a configured licensed SDP8.0 environment, run `make -C native`. Record qcc variant/version and build output. Transfer native/faultlab_inventory and native/inventory-smoke.sh to a disposable QNX8.0 x86_64 directory, then run:
+
+```sh
+sh inventory-smoke.sh ./faultlab_inventory ./fresh-inventory
+```
+
+Expected harness exit0 means the expected naive mismatch and corrected success were retained; it is not a host analysis. Transfer the complete fresh-inventory directory back. Analyze fresh-inventory/naive/capture.ndjson and fresh-inventory/idempotent/capture.ndjson with the commands above and new output paths. Inspect actual receipts/journals and results, not assumed outcomes. State/output paths must be new. Preserve partial bytes and diagnostics on failure.
+
+The service uses ChannelCreate/ConnectAttach/MsgSend/MsgReceive/MsgReply and TimerTimeout. append_log synchronizes/closes the journal before _exit42; load_log reconstructs stock/history. See [source](../native/inventory_demo.c), [native instructions](../native/README.md), [MsgSend](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.neutrino.lib_ref/topic/m/msgsend.html) and [fsync](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.neutrino.lib_ref/topic/f/fsync.html).
+
+Interpretation: host1=analyzed mismatch with retained report; host2=invalid/incomplete input or IO, not an application verdict. No SDK? Replay retained data and label it replay. A green result does not establish arbitrary-service correctness, power-loss durability, hardware timing, safety or human benefit. This original in-period guide was authored with Codex assistance.
+
+## Optional legacy IPC walkthrough
+
+The following original task teaches the narrower healthy/stall/exit contracts. Its synthetic failed-echo comparison is separate from the actual native application baseline above.
 
 This self-paced guide is for a QNX developer or reviewer who wants to answer a specific question: when a sample service stalls or exits, what did the client observe, and did a fresh service return the correct reply afterward?
 

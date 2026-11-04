@@ -1,0 +1,20 @@
+{
+  "contract": "inventory-retry/1",
+  "native_source_sha256": "254993e0e8d4cb0bc540eab392e6067fe02b74956975b01df0727e1179126026",
+  "native_binary_sha256": "8980d03feb25609914b604ce03fd1ee7c28dd795ae2c6b2e6fe03cef8db3c4e0",
+  "native_harness_sha256": "e1f15bd7656e8bb5760848d16a2b415c46290326421d0a8e15b78d3afe4ab750",
+  "target": "QNX faultlab-disposable 8.0.0 2026/06/05-16:26:03EDT x86pc x86_64",
+  "validation": "docs/inventory-validation.md",
+  "files": {
+    "idempotent/capture.ndjson": "89afaf6d3dca94fc424e54bf1546cdcdfe871af4b1728d1d3d1d9483848767e0",
+    "idempotent/diagnostics.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "idempotent/native-exit-code.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "idempotent/state/journal.txt": "95dba41dbb180df77acd7d215c4343515ca6cd1ab389ee2745151e2b5d799702",
+    "naive/capture.ndjson": "864742e6d8f953ef8cbf6807ad44c2b28193805a59a3007f4f87fb7986c320d9",
+    "naive/diagnostics.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "naive/native-exit-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "naive/state/journal.txt": "14b5d2552ae9031658a3e2ab48a424ede03fc4cf2a8d85cb95b30f0fdc1cf93d",
+    "target.txt": "c1f0a9d4cf816e791c73706ded9cb5f5da970f49de03986b23d9d743f2f3349c",
+    "tool-version.txt": "a03713a608f75da0fdae69bf492641c9db3055f089c6fd1af4e6d4106fcf9a70"
+  }
+}

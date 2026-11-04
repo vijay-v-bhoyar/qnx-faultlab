@@ -11,6 +11,8 @@ __pycache__/
 !.env.example
 /native/faultlab_probe
 /native/faultlab_probe.exe
+/native/faultlab_inventory
+/native/faultlab_inventory.exe
 # Do not distribute local SDK/account/runtime material.
 *.key
 *.license
