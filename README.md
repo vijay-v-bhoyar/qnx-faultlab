@@ -7,6 +7,9 @@ FaultLab pairs a small native QNX 8.0 example runner with a dependency-free Pyth
 
 ![Synthetic report example](assets/report-synthetic-desktop.png)
 
+## Guided tutorial
+Learn to [inspect QNX client failures and recovery evidence](docs/faultlab-codelab.md) using the retained native sample, a deliberately failed synthetic recovery, and an optional fresh-target run.
+
 ## Try the host report
 From this source directory, use Python 3.10 or newer (locally exercised with Python 3.12 on Windows):
 ```sh
