@@ -8,6 +8,12 @@ Use Python3.10+ from this repository root. Replaying retained captures requires 
 
 Only FaultLab's own service is faulted. This is a controlled process-crash sample, not a production inventory system, arbitrary-service adapter, concurrent-writer journal, power-loss engine or distributed exactly-once guarantee. No measured learner/productivity benefit is claimed.
 
+## Intended use and learning objective
+
+The intended reader is a developer reviewing a QNX service used in an industrial system. QNX's [industrial automation context](https://qnx.software/en/industries/industrial-automation) includes controllers and systems that need predictable responses as well as reliable service behavior. Treat the sample's stock reservation as an analogy for reserving a job or shared resource in that setting. It is not a tested controller integration, a field deployment or evidence of customer demand.
+
+The real-time lesson is to keep caller waiting and application effects separate. This native runner sets [TimerTimeout](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.neutrino.lib_ref/topic/t/timertimeout.html) on SEND/REPLY blocking around MsgSend. That controls a kernel-call waiting condition; it does not roll back an operation that committed before its reply was lost. Persisted operation identity addresses duplicate effects after retry. By the end of the walkthrough, use the actual error, state/count, journal and optional budget observations to decide which guarantee was established. No plant-cycle deadline, scheduling guarantee or measured learner improvement follows from this exercise.
+
 ## A. Predict the application invariant
 
 Start stock10. Operation101 reserves3 and commits to a synchronized/closed journal, then the service exits42 BEFORE MsgReply. The client observes ESRCH. On restart the same journal must reconstruct stock7 with one committed reservation. Retrying101/3 must leave7/1 and recognize the duplicate. New operation102/2 must leave5/2.
@@ -20,6 +26,8 @@ Start stock10. Operation101 reserves3 and commits to a synchronized/closed journ
 | New102/2 and final query |2 units /3 commits|5 units /2 commits|
 
 Checkpoint: why is a successful reply from a restarted service insufficient?
+
+Second checkpoint: which waiting condition does TimerTimeout address, and which property must the persisted operation ID protect? A lost reply leaves the first operation's effect unknown to the caller; timing out that wait does not prove it was uncommitted. Use the later state query and journal before deciding whether retry is safe. This is a self-study explanation of the demonstrated contract, not a separately observed learner result.
 
 ## B. Inspect the real native failing baseline
 
